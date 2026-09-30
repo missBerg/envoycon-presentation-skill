@@ -1,0 +1,157 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:'Space Grotesk';font-weight:700;src:url(fontsource-space-grotesk-5.3.0/files/space-grotesk-latin-700-normal.woff2)}
+@font-face{font-family:'JetBrains Mono';font-weight:700;src:url(fontsource-jetbrains-mono-5.3.0/files/jetbrains-mono-latin-700-normal.woff2)}
+@font-face{font-family:'Inter';font-weight:400;src:url(fontsource-inter-5.3.0/files/inter-latin-400-normal.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1920px;height:1080px;position:relative;overflow:hidden}
+.layer{position:absolute;inset:0}
+.t{position:absolute;font-family:'Space Grotesk';font-weight:700;letter-spacing:-.02em;line-height:.98}
+.m{position:absolute;font:700 17px 'JetBrains Mono';letter-spacing:.2em}
+.b{position:absolute;font:400 27px/1.5 Inter}
+.bar{position:absolute;width:8px;border-radius:4px;background:linear-gradient(180deg,#d163ce,#8a12c4)}
+</style></head><body>
+<script>
+/* EnvoyCon 10 — "out of focus lights" backgrounds.
+   Idea: the hexagon is the lens aperture. Every light in the scene is a hexagonal bokeh disc, all the
+   same orientation (like a real 6-blade aperture). Depth = blur: far lights are big, soft and dim;
+   mid lights have the bright rim real bokeh has; 1–2 near hexes are in focus (crisp glass).
+   A pink/purple glow field underneath gives the slide its texture.                                  */
+const q=new URLSearchParams(location.search), V=q.get('v')||'hero', TH=q.get('th')||'dark', L=TH==='light', TXT=q.get('txt')!=='0';
+let seed=+(q.get('seed')||1310); const rnd=()=> (seed=seed*16807%2147483647)/2147483647;
+const R=(a,b)=>a+rnd()*(b-a);
+function hexPath(cx,cy,r,k=.2){const v=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-90);v.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}
+  const l=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],f=p=>p[0].toFixed(1)+','+p[1].toFixed(1);let d='';
+  for(let i=0;i<6;i++){const p=v[(i+5)%6],c=v[i],n=v[(i+1)%6],A=l(c,p,k),B=l(c,n,k);d+=(i?'L':'M')+f(A)+'Q'+f(c)+' '+f(B)}return d+'Z'}
+
+// ---- palettes
+const P = TH==='pink'
+ ? {base:'linear-gradient(118deg,#c24fc4 0%,#b31aab 45%,#9a16b8 75%,#8a12c4 100%)', lights:['#ffffff','#ffd6fb','#f3b5f0'], blend:'screen',
+    glows:[['#ffffff',.18],['#eba6e8',.35],['#8a12c4',.45]], ink:'#fff', meta:'rgba(255,255,255,.8)'}
+ : L
+ ? {base:'linear-gradient(118deg,#fdfbfe 0%,#fbf8fd 45%,#f5eaf8 75%,#eed8f4 100%)', lights:['#d163ce','#b31aab','#a064d8','#eba6e8'], blend:'multiply',
+    glows:[['#eba6e8',.35],['#c9a4ef',.28],['#f6d3f3',.5]], ink:'#10041c', meta:'#b31aab'}
+ : {base:'linear-gradient(118deg,#16052a 0%,#10041c 35%,#1a0630 60%,#2a0947 100%)', lights:['#d163ce','#eba6e8','#b31aab','#9a4fe0','#8a12c4'], blend:'screen',
+    glows:[['#b31aab',.30],['#8a12c4',.34],['#d163ce',.16]], ink:'#fff', meta:'#eba6e8'};
+
+// ---- scene specs per purpose. Zones are functions returning [x,y]. Depth layers: far → mid → near.
+const W=1920,H=1080;
+const Z={ // placement zones
+  right:  ()=>[R(1150,2000),R(-80,1160)],
+  corner: ()=>{const t=rnd(); return t<.6?[R(1350,2020),R(600,1180)]:[R(1600,2020),R(-100,500)]},
+  edges:  ()=>{const t=rnd(); return t<.35?[R(1500,2020),R(-80,1160)]:t<.6?[R(-100,380),R(-80,1160)]:t<.8?[R(-100,2020),R(-120,120)]:[R(-100,2020),R(960,1200)]},
+  ring:   ()=>{const a=R(0,Math.PI*2), rr=R(.78,1.25); return [960+Math.cos(a)*1050*rr, 540+Math.sin(a)*640*rr]},
+  all:    ()=>[R(-100,2020),R(-100,1180)],
+  left:   ()=>[R(-120,820),R(-80,1160)],
+  lowband:()=>[R(-100,2020),R(700,1200)],
+  rightw: ()=>[R(1100,2040),R(-80,1160)],
+  lcorner:()=>{const t=rnd(); return t<.6?[R(-100,570),R(600,1180)]:[R(-100,320),R(-100,500)]},
+};
+// Round 2: one continuous depth-of-field. Every light gets a depth d (0 = focus plane, 1 = far).
+// blur, brightness and rim strength all follow d, so there is no jump between the sharpest light
+// and the next one — depths are stratified so every step of the ramp is represented.
+// Round 5: composed. The near/mid lights (d < .45) are placed by hand for balance; only the far,
+// hazy lights are scattered. keys = [x, y, r, depth]; depth 0 = the focus light.
+const Zx={};
+const S={
+  hero2:    {glow:[[85,-5,55,55,0],[-5,75,45,55,1],[65,110,45,35,2]],
+             fg:[[2060,1160,560],[1790,-170,380],[-190,1190,420]],
+             keys:[[1800,885,118,0],[1560,330,92,.12],[1885,470,78,.18],[1480,935,104,.22],[1625,1045,80,.28],[1650,110,68,.3],[1290,1010,52,.38],[1765,300,140,.44]],
+             lights:[{n:16,zone:'right',r:[110,290],d:[.5,1]}]},
+  content:  {glow:[[100,-12,55,50,0],[102,105,45,45,1]],
+             keys:[[1745,935,88,.24],[1590,1035,68,.32],[1885,770,58,.38]],
+             lights:[{n:11,zone:'corner',r:[70,210],d:[.46,1]}]},
+  section:  {glow:[[85,0,60,60,0],[0,80,45,55,1],[60,115,45,35,2]],
+             keys:[[1690,330,122,0],[1560,765,94,.15],[1865,620,78,.2],[1790,1000,100,.24],[1505,135,68,.3],[1885,150,58,.36]],
+             lights:[{n:16,zone:'right',r:[110,300],d:[.46,1]}]},
+  statement:{glow:[[50,55,55,55,1],[100,0,40,45,0],[0,100,40,45,2]],
+             keys:[[1820,965,100,.16],[1780,140,88,.22],[180,120,78,.24],[260,990,84,.26],[1885,560,58,.32],[960,1045,68,.36]],
+             lights:[{n:20,zone:'ring',r:[110,290],d:[.46,1]}]},
+  speaker:  {glow:[[20,48,40,55,0],[85,0,45,45,1],[90,110,40,40,2]],
+             keys:[[1800,995,88,.22],[120,225,88,.15],[645,250,78,.2],[565,885,108,.18],[95,760,68,.26],[365,1015,92,.3],[705,640,58,.36],[1880,120,70,.34]],
+             lights:[{n:16,zone:'left',r:[110,290],d:[.46,1]},{n:4,zone:'corner',r:[80,160],d:[.55,1]}]},
+  break:    {glow:[[70,20,60,60,0],[10,90,55,55,1],[90,100,45,40,2]],
+             keys:[[1640,260,104,0],[1505,765,90,.15],[1835,560,80,.2],[1885,1000,100,.18],[300,985,90,.22],[900,1015,70,.3],[1200,120,80,.28],[120,160,70,.34]],
+             lights:[{n:22,zone:'all',r:[110,320],d:[.46,1]}]},
+};
+S.speakerR={glow:S.speaker.glow.map(([x,y,w,h,c])=>[100-x,y,w,h,c]),
+  keys:S.speaker.keys.map(([x,y,r,d])=>[1920-x,y,r,d]),
+  lights:[{n:16,zone:'rightw',r:[110,290],d:[.46,1]},{n:4,zone:'lcorner',r:[80,160],d:[.55,1]}]};
+// Atmosphere: soft veils of glow painted BETWEEN depth bands, centred on the light cluster,
+// so each band further back is washed toward the haze colour (like real aerial perspective).
+const HZ={speakerR:{c:[1540,520],rx:900,ry:820}, hero2:{c:[1560,560],rx:980,ry:820}, speaker:{c:[380,520],rx:900,ry:820}, content:{c:[1780,930],rx:900,ry:640},
+          statement:{ring:true}, break:{c:[1100,520],rx:1500,ry:1000}, section:{c:[1600,520],rx:980,ry:820}};
+const HAZE= TH==='pink'? {cols:['#c33cc1','#d86ad6','#b92fba'],a:[.22,.16,.1],mix:'#c860c8'}
+          : L? {cols:['#fbf5fc','#f5e4f6','#fbf5fc'],a:[.36,.26,.15],mix:'#f2e2f5'}
+          : {cols:['#22083a','#351050','#22083a'],a:[.22,.16,.1],mix:'#34104f'};
+const AV={speakerR:[[100,320,1150,930]],hero2:[[100,320,1340,940]],content:[[100,130,1720,640]],section:[[90,230,1500,940]],statement:[[100,210,1680,880]],speaker:[[740,320,1820,930]],break:[[100,330,1320,790]]};
+const sc=S[V];
+const hitAv=(x,y,r)=>(AV[V]||[]).some(b=>x+r>b[0]&&x-r<b[2]&&y+r>b[1]&&y-r<b[3]);
+
+let html=`<div class="layer" style="background:${P.base}"></div>`;
+html+=`<div class="layer" style="background:${sc.glow.map(([x,y,w,h,c])=>{const [col,a]=P.glows[c];return `radial-gradient(ellipse ${w}% ${h}% at ${x}% ${y}%, ${hexA(col,a)}, transparent 70%)`}).join(',')}"></div>`;
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+
+let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" style="position:absolute;inset:0"><defs>`;
+const blurs=new Set();
+const K=L?.8:TH==='pink'?1.1:1;
+const blurOf=d=>Math.round((2.5+55*Math.pow(d,1.4))*2)/2;           // 2.5px at focus → ~57px far
+// Round 3: thin gradient outline lit from the top-left (45°) with a soft glow on it,
+// and a 45° gradient fill (colour → a neighbouring palette colour, fading out).
+const grads=new Map();
+function tint(h,t){const n=parseInt(h.slice(1),16),m=[n>>16,n>>8&255,n&255].map(v=>Math.round(v+(255-v)*t));return '#'+m.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mix(a,b,t){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);return '#'+[16,8,0].map(k=>Math.round((A>>k&255)*(1-t)+(B>>k&255)*t).toString(16).padStart(2,'0')).join('')}
+function gradFor(c0,d){ const m=Math.round(Math.min(1,d)*0.5*10)/10, key=c0+m; if(grads.has(key)) return grads.get(key);
+  const c=mix(c0,HAZE.mix,m), c2=mix(P.lights[(P.lights.indexOf(c0)+1)%P.lights.length],HAZE.mix,m), id='g'+grads.size, hi=L?c:tint(c,.3);
+  grads.set(key,id);
+  svg+=`<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${hi}" stop-opacity=".7"/><stop offset=".3" stop-color="${hi}" stop-opacity=".5"/><stop offset=".65" stop-color="${c}" stop-opacity=".2"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient>`+
+       `<linearGradient id="${id}f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c}" stop-opacity="1"/><stop offset=".55" stop-color="${c2}" stop-opacity=".55"/><stop offset="1" stop-color="${c2}" stop-opacity=".12"/></linearGradient>`;
+  return id}
+function light(x,y,r,d,c){
+  const b=blurOf(d), bg=Math.round((b+5+r*.03)*2)/2; blurs.add(b); blurs.add(bg);
+  const op=Math.min(1,Math.max(.18,0.6-0.34*d)*K), rim=Math.min(1,1.05*Math.pow(1-d,1.1)+0.2), fill=0.42+0.3*d, p=hexPath(x,y,r,.2), g=gradFor(c,d);
+  const sw=Math.max(1.2,r*.018).toFixed(1), f=v=>String(v).replace('.','_');
+  return `<g style="mix-blend-mode:${P.blend}" opacity="${op.toFixed(3)}">`+
+    `<g filter="url(#b${f(b)})"><path d="${p}" fill="url(#${g}f)" fill-opacity="${fill.toFixed(2)}"/>`+
+    `<path d="${p}" fill="none" stroke="url(#${g}s)" stroke-width="${sw}" stroke-opacity="${rim.toFixed(2)}"/></g>`+
+    `<g filter="url(#b${f(bg)})"><path d="${p}" fill="none" stroke="url(#${g}s)" stroke-width="${(sw*5).toFixed(1)}" stroke-opacity="${(rim*.45).toFixed(2)}"/></g></g>`}
+let items=[];
+sc.lights.forEach(g=>{const [d0,d1]=g.d||[.06,1];
+  for(let i=0,t=0;i<g.n&&t<800;t++){
+    const d=d0+(d1-d0)*((i+rnd())/g.n);                                 // stratified depth
+    const [x,y]=Z[g.zone](); const r=R(g.r[0],g.r[1])*(0.8+0.5*d);      // far lights read larger (defocus)
+    if(blurOf(d)<24&&hitAv(x,y,r*1.15)) continue;                        // anything crisp stays off the text
+    i++; items.push([d,x,y,r,P.lights[Math.floor(rnd()*P.lights.length)]]);}});
+(sc.keys||[]).forEach(([x,y,r,d],i)=>items.push([d,x,y,r*(d===0?1:1.45),d===0?(TH==='pink'?'#ffffff':L?'#b31aab':'#d9a6ff'):P.lights[i%P.lights.length]]));
+(sc.fg||[]).forEach(([x,y,r],i)=>items.push([1.25,x,y,r,P.lights[i%P.lights.length],true]));
+const hz=HZ[V]||{c:[960,540],rx:1400,ry:900};
+svg+=HAZE.cols.map((col,i)=>hz.ring
+   ? `<radialGradient id="hz${i}" cx="960" cy="540" r="1150" gradientUnits="userSpaceOnUse"><stop offset=".35" stop-color="${col}" stop-opacity="0"/><stop offset=".8" stop-color="${col}" stop-opacity="${HAZE.a[i]}"/><stop offset="1" stop-color="${col}" stop-opacity="${HAZE.a[i]*.9}"/></radialGradient>`
+   : `<radialGradient id="hz${i}" cx="${hz.c[0]}" cy="${hz.c[1]}" r="${hz.rx}" gradientUnits="userSpaceOnUse" gradientTransform="translate(${hz.c[0]} ${hz.c[1]}) scale(1 ${(hz.ry/hz.rx).toFixed(3)}) translate(${-hz.c[0]} ${-hz.c[1]})"><stop offset="0" stop-color="${col}" stop-opacity="${HAZE.a[i]}"/><stop offset=".55" stop-color="${col}" stop-opacity="${HAZE.a[i]*.7}"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></radialGradient>`).join('');
+const veil=i=>`<rect width="${W}" height="${H}" fill="url(#hz${i})"/>`;
+const bg=items.filter(it=>!it[5]).sort((a,b)=>b[0]-a[0]), fgs=items.filter(it=>it[5]);
+const bands=[.72,.46,.22]; let body='', bi=0;
+for(const it of bg){ while(bi<bands.length && it[0]<bands[bi]){ body+=veil(bi); bi++; } body+=light(it[1],it[2],it[3],Math.min(it[0],1),it[4]); }
+while(bi<bands.length){ body+=veil(bi); bi++; }
+body+=fgs.map(it=>light(it[1],it[2],it[3],1.25,it[4])).join('');   // near-camera blur sits in front of the haze
+blurs.forEach(b=>svg+=`<filter id="b${String(b).replace('.','_')}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${b}"/></filter>`);
+svg+=`<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0"/></filter></defs>`;
+svg+=`<g style="isolation:isolate">${body}</g>`;
+svg+=`<rect width="${W}" height="${H}" filter="url(#grain)" opacity="${L?.025:.03}" style="mix-blend-mode:overlay"/></svg>`;
+html+=svg;
+
+// ---- mock text (placement matches the real layouts) to judge interference
+const ink=P.ink, meta=P.meta, dim=L?'#524859':TH==='pink'?'rgba(255,255,255,.85)':'#bcb9bf';
+const T={
+ hero:`<div class="m" style="left:128px;top:340px;color:${meta}">PLATFORM · INTERMEDIATE</div><div class="t" style="left:128px;top:410px;width:1180px;font-size:88px;color:${ink}">Ten years of Envoy: what the proxy taught us about platforms</div><div class="bar" style="left:128px;top:806px;height:112px"></div><div class="t" style="left:164px;top:812px;font-size:44px;color:${ink}">Speaker Name</div><div class="b" style="left:164px;top:872px;color:${dim}">Maintainer · Company</div>`,
+ content:`<div class="m" style="left:128px;top:150px;color:${meta}">LESSON 01</div><div class="t" style="left:128px;top:196px;width:1440px;font-size:64px;color:${ink}">Start with the traffic shape, not the feature list</div><div class="b" style="left:128px;top:400px;width:1500px;color:${ink}">• Long-running, body-dependent requests break request-count limits<br>• Route on what the request contains<br>• Make the policy observable before you enforce it<br>• Price by tokens, not by calls</div>`,
+ section:`<div class="t" style="left:112px;top:250px;font-size:360px;color:#fff;line-height:.85">01</div><div class="m" style="left:128px;top:640px;color:rgba(255,255,255,.85)">PART ONE</div><div class="t" style="left:128px;top:692px;font-size:120px;color:#fff">Where Envoy came from</div>`,
+ statement:`<div class="m" style="left:128px;top:230px;color:${meta}">THE TAKEAWAY</div><div class="t" style="left:128px;top:290px;width:1500px;font-size:92px;color:${ink};line-height:1.02">The best infrastructure disappears — until the day you need to explain it.</div><div class="bar" style="left:128px;top:760px;height:100px"></div><div class="t" style="left:164px;top:764px;font-size:36px;color:${ink}">Speaker Name</div>`,
+ speaker:`<div style="position:absolute;left:170px;top:317px;width:460px;height:460px;border-radius:50%;border:8px solid #d163ce;background:${L?'#f3eaf6':'#1c0930'}"></div><div class="m" style="left:760px;top:345px;color:${meta}">UP NEXT · AI INFRASTRUCTURE</div><div class="t" style="left:760px;top:410px;width:1030px;font-size:80px;color:${ink}">Routing LLM traffic with Envoy AI Gateway</div><div class="bar" style="left:760px;top:730px;height:112px"></div><div class="t" style="left:796px;top:736px;font-size:44px;color:${ink}">Speaker Name</div><div class="b" style="left:796px;top:796px;color:${dim}">Maintainer · Company</div><div class="m" style="left:760px;top:884px;color:${meta}">STARTS 13:40</div>`,
+ break:`<div class="m" style="left:128px;top:345px;color:${meta}">SHORT BREAK</div><div class="t" style="left:128px;top:410px;font-size:160px;color:${ink}">Back at 14:30</div><div class="b" style="left:128px;top:720px;color:${dim}">Stretch, refill, and bring your questions.</div>`,
+};
+T.hero2=T.hero;
+if(TXT) html+=T[V];
+document.body.innerHTML=html;
+</script></body></html>
