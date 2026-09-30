@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EnvoyCon 10 — HTML deck example</title>
+<link rel="stylesheet" href="envoycon-deck.css">
+</head>
+<!-- One deck theme for the whole talk: data-theme="dark" (default) or "light".
+     Every layout below mirrors a layout in EnvoyCon-10-Slides-Template.pptx.
+     Try ?theme=light in the URL to preview the light theme. -->
+<body class="deck" data-theme="dark">
+<script>if (new URLSearchParams(location.search).get('theme') === 'light') document.body.dataset.theme = 'light';</script>
+
+<!-- 1 · Talk Title -->
+<section class="slide l-title">
+  <div class="ec-lockup"></div>
+  <div class="chips"><span class="pill track">Platform</span><span class="pill level">Intermediate</span></div>
+  <h1 class="title">Ten years of Envoy: what the proxy taught us about platforms</h1>
+  <div class="bar-v"></div><div class="speaker">Speaker Name</div><div class="role">Maintainer · Company</div>
+  <div class="ec-ten"></div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy · 2016 — 2026</span></div>
+</section>
+
+<!-- 2 · Talk Title · Photo -->
+<section class="slide l-title-photo">
+  <div class="ec-lockup"></div>
+  <div class="chips"><span class="pill track">AI infrastructure</span><span class="pill level">Advanced</span></div>
+  <h1 class="title">Routing LLM traffic with Envoy AI Gateway</h1>
+  <div class="ec-photo"></div>
+  <div class="bar-v"></div><div class="speaker">Speaker Name</div><div class="role">Maintainer · Company</div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy · 2016 — 2026</span></div>
+</section>
+
+<!-- 3 · About Me -->
+<section class="slide l-about">
+  <div class="ec-photo"></div>
+  <div class="kicker">About me</div>
+  <h2 class="title">Speaker Name</h2>
+  <div class="role">Role · Company</div>
+  <ul class="bullets"><li>Maintainer of an Envoy ecosystem project</li><li>Works on gateways, routing, and policy</li><li>Previously built platforms at scale</li></ul>
+  <div class="handles">GitHub @handle · LinkedIn /in/handle</div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 4 · Section Divider (pink in both themes) -->
+<section class="slide l-section">
+  <div class="ec-lockup"></div>
+  <div class="num">01</div>
+  <div class="kicker">Part one</div>
+  <h2 class="title">Where Envoy came from</h2>
+</section>
+
+<!-- 5 · Title + Content -->
+<section class="slide l-content">
+  <div class="bar-h"></div><div class="kicker">Lesson 01</div>
+  <h2 class="title">Start with the traffic shape, not the feature list</h2>
+  <ul class="bullets">
+    <li>Long-running, body-dependent requests break request-count limits<ul><li>Price by tokens, not by calls</li></ul></li>
+    <li>Route on what the request contains</li>
+    <li>Make the policy observable before you enforce it</li>
+  </ul>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 6 · Two Columns -->
+<section class="slide l-two-col">
+  <div class="bar-h"></div><div class="kicker">Before / after</div>
+  <h2 class="title">From sidecar sprawl to one gateway</h2>
+  <div class="col"><div class="col-label">Before</div><ul class="bullets"><li>Per-team ingress configs</li><li>Policy copied into every service</li><li>No shared view of traffic</li></ul></div>
+  <div class="col"><div class="col-label">After</div><ul class="bullets"><li>Gateway API as the contract</li><li>Policy attached once, at the edge</li><li>One place to observe and debug</li></ul></div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 7 · Code (panel stays dark in both themes) -->
+<section class="slide l-code">
+  <div class="bar-h"></div><div class="kicker">Config</div>
+  <h2 class="title">Attach a route in five lines</h2>
+  <div class="code"><span class="code-label">httproute.yaml</span><pre><span class="k">apiVersion:</span> gateway.networking.k8s.io/v1
+<span class="k">kind:</span> HTTPRoute
+<span class="k">metadata:</span>
+  <span class="k">name:</span> backend
+<span class="k">spec:</span>
+  <span class="k">parentRefs:</span>
+    - <span class="k">name:</span> eg
+  <span class="k">rules:</span>
+    - <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> backend
+          <span class="k">port:</span> 3000</pre></div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 8 · Diagram -->
+<section class="slide l-diagram">
+  <div class="bar-h"></div><div class="kicker">Architecture</div>
+  <h2 class="title">One diagram, one idea</h2>
+  <div class="frame"><svg viewBox="0 0 900 260" width="900" height="260" fill="none" stroke="currentColor" style="color:var(--meta)">
+    <rect x="10" y="90" width="200" height="80" rx="14" stroke-width="3"/><rect x="350" y="90" width="200" height="80" rx="14" stroke-width="3" style="color:var(--pink)"/><rect x="690" y="90" width="200" height="80" rx="14" stroke-width="3"/>
+    <path d="M210 130h140M550 130h140" stroke-width="3"/>
+    <g font-family="JetBrains Mono" font-size="20" fill="currentColor" stroke="none" text-anchor="middle"><text x="110" y="137">CLIENT</text><text x="450" y="137">ENVOY</text><text x="790" y="137">BACKEND</text></g></svg></div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 9 · Big Number (gradient numeral is live text in HTML) -->
+<section class="slide l-big-number">
+  <div class="kicker">By the numbers</div>
+  <div class="big grad-text">10</div>
+  <h2 class="title">years of Envoy in production</h2>
+  <div class="context">2016 — 2026</div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 10 · Statement -->
+<section class="slide l-statement">
+  <div class="kicker">The takeaway</div>
+  <h2 class="title">The best infrastructure disappears — until the day you need to explain it.</h2>
+  <div class="bar-v"></div><div class="speaker">Speaker Name</div><div class="role">Maintainer · Company</div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 11 · Thank You -->
+<section class="slide l-thanks">
+  <div class="ec-lockup"></div>
+  <span class="pill">Q &amp; A</span>
+  <h2 class="title">Thank you</h2>
+  <div class="bar-v"></div><div class="speaker">Speaker Name</div>
+  <div class="handles">GitHub @handle · LinkedIn /in/handle</div>
+  <div class="ec-ten"></div>
+</section>
+
+<!-- 12 · Event Welcome (host) -->
+<section class="slide l-welcome">
+  <div class="ec-lockup"></div>
+  <span class="pill">10 Year Anniversary Edition</span>
+  <div class="ec-ten"></div>
+  <h1 class="title">Welcome to EnvoyCon</h1>
+  <div class="sub">One community, and a decade of the proxy that runs the cloud-native world.</div>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 year anniversary edition</span></div>
+</section>
+
+<!-- 13 · Agenda (host) -->
+<section class="slide l-agenda">
+  <div class="bar-h"></div><div class="kicker">Today · all times local</div>
+  <h2 class="title">Agenda</h2>
+  <table>
+    <tr><td class="t">13:00</td><td class="s">Welcome &amp; opening</td><td class="p">Hosts</td></tr>
+    <tr><td class="t">13:10</td><td class="s">Keynote: ten years of Envoy</td><td class="p">Speaker Name</td></tr>
+    <tr><td class="t">13:40</td><td class="s">Session title goes here</td><td class="p">Speaker Name</td></tr>
+    <tr class="muted"><td class="t">14:20</td><td class="s">Break</td><td class="p"></td></tr>
+    <tr><td class="t">14:30</td><td class="s">Lightning talks</td><td class="p">Various</td></tr>
+    <tr><td class="t">15:50</td><td class="s">Closing</td><td class="p">Hosts</td></tr>
+  </table>
+  <div class="footer"><b>EnvoyCon</b><i>·</i><span>10 years of Envoy</span></div><div class="slide-num"></div>
+</section>
+
+<!-- 14 · Up Next (host) -->
+<section class="slide l-up-next">
+  <div class="ec-lockup"></div>
+  <div class="ec-photo"></div>
+  <div class="chips"><span class="pill">Up next</span><span class="pill track">AI infrastructure</span></div>
+  <h2 class="title">Routing LLM traffic with Envoy AI Gateway</h2>
+  <div class="bar-v"></div><div class="speaker">Speaker Name</div><div class="role">Maintainer · Company</div>
+  <div class="start">Starts 13:40</div>
+</section>
+
+<!-- 15 · Break (host) -->
+<section class="slide l-break">
+  <div class="ec-lockup"></div>
+  <span class="pill">Short break</span>
+  <h2 class="title">Back at 14:30</h2>
+  <div class="sub">Stretch, refill, and bring your questions.</div>
+</section>
+
+<script src="envoycon-deck.js"></script>
+</body>
+</html>
