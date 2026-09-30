@@ -1,0 +1,8 @@
+{
+  "name": "envoycon-presentation",
+  "description": "EnvoyCon 10 Year Anniversary slide decks: Google Slides/.pptx template and HTML decks with the same out-of-focus-light backgrounds, tokens and layouts.",
+  "version": "1.0.0",
+  "author": { "name": "Erica Hughberg", "url": "https://github.com/missBerg" },
+  "repository": "https://github.com/missBerg/envoycon-presentation-skill",
+  "skills": ["./envoycon-presentation/"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "envoycon",
+  "owner": {
+    "name": "Erica Hughberg",
+    "url": "https://github.com/missBerg"
+  },
+  "plugins": [
+    {
+      "name": "envoycon-presentation",
+      "source": "./",
+      "description": "EnvoyCon 10 Year Anniversary presentation skill (pptx + HTML decks)"
+    }
+  ],
+  "description": "EnvoyCon 10 Year Anniversary presentation tooling"
+}
