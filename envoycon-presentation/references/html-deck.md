@@ -8,11 +8,15 @@ It uses the same backgrounds, tokens and layout geometry as the pptx template, s
 - `templates/html/envoycon-deck.css`: tokens (dark and light), all 15 layouts, backgrounds, pills, headshot and print rules. Asset paths are relative to this file (`../../assets/...`).
 - `templates/html/envoycon-deck.js`: scales the 1920×1080 stage to the window. Keys: → ← Space, Home/End, F for fullscreen, P to print/PDF. `#n` in the URL is the current slide. It also fills `.slide-num`.
 - `templates/html/example.html`: every layout, ready to copy. Add `?theme=light` to preview light.
+- `scripts/new-html-deck.py`: scaffolds a deck folder with the theme, assets and a copy of the example.
 - `scripts/build-html-deck.py`: bundles a deck into one self-contained HTML file. CSS and JS are inlined and images become data URIs. It only embeds the backgrounds the deck uses.
 
 ## Authoring
 
-1. Write the deck next to the template: `templates/html/<talk-slug>.html`. Start from `example.html` and keep only the layouts the outline needs.
+1. Scaffold the deck wherever the talk lives:
+   `python3 scripts/new-html-deck.py <deck-dir> --slug <talk-slug> --theme dark|light`.
+   That creates `<talk-slug>.html` from the example, plus `theme/` and `assets/`. Keep only the layouts the outline needs.
+   In Claude Code, `scripts/` is `${CLAUDE_SKILL_DIR}/scripts/`.
 2. Set `<body class="deck" data-theme="dark">` (or `light`). Use one theme per deck. A single slide can override it with its own `data-theme`.
 3. Use one `<section class="slide l-<layout>">` per slide, with the same child classes as the example: `.kicker`, `.title`, `.bullets`, `.speaker`, `.role`, `.pill` (plus `.track`/`.level`), `.ec-photo`, `.ec-lockup`, `.ec-ten`, `.bar-v`, `.bar-h`, `.footer`, `.slide-num`.
 4. **Headshots:** `<div class="ec-photo"><img src="speaker.jpg" alt="Speaker Name"></div>`. Leave the div empty to show the placeholder.
@@ -23,7 +27,7 @@ It uses the same backgrounds, tokens and layout geometry as the pptx template, s
 ## Deliver
 
 ```bash
-python3 scripts/build-html-deck.py templates/html/<talk-slug>.html out/<talk-slug>-envoycon10.html [--theme light]
+python3 scripts/build-html-deck.py <deck-dir>/<talk-slug>.html <deck-dir>/<talk-slug>-envoycon10.html [--theme light]
 ```
 
 - **One file:** about 1.5 MB with all 15 layouts in one theme. Fonts load from Google Fonts, which Artifact pages allow.
