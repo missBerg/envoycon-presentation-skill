@@ -1,0 +1,5 @@
+envoycon-presentation/scripts/assets/
+envoycon-presentation/scripts/*.pptx
+**/*@2x.png
+.DS_Store
+__pycache__/
