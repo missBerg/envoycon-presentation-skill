@@ -30,10 +30,13 @@ envoycon-presentation/
   templates/pptx/EnvoyCon-10-Slides-Template.pptx
   templates/html/              envoycon-deck.css · envoycon-deck.js · example.html (all 15 layouts)
   references/                  tokens.json · layouts.md · backgrounds.md · html-deck.md
-  scripts/                     build-html-deck.py · backgrounds.html + render-bg.mjs · build_template.py (+ make-kit.sh) · render.mjs · assets.html
+  scripts/                     new-html-deck.py · build-html-deck.py · backgrounds.html + render-bg.mjs · build_template.py (+ make-kit.sh) · render.mjs · assets.html
 ```
 
 **Getting the files:**
+0. **Installed in Claude Code** (plugin or `~/.claude/skills/`): the files are right next to this SKILL.md,
+   at `${CLAUDE_SKILL_DIR}`. Every repo path below (`templates/…`, `assets/…`, `scripts/…`, `references/…`)
+   is relative to that folder. Never write talk files inside it, because plugin updates replace it.
 1. Clone it with `git clone https://github.com/missBerg/envoycon-presentation-skill` if the shell has GitHub access.
 2. Otherwise, use the GitHub connector: `get_file_contents` with owner `missBerg`, repo `envoycon-presentation-skill` and a path under `envoycon-presentation/`. The repo is private, so the Claude GitHub app must have access to it. If you get a 404, ask the user to add the repo to the app.
 3. The local kit is a fallback: `~/Downloads/envoycon-design-system/slides/` has the pptx and `slides-kit/`.
@@ -342,13 +345,16 @@ Tile the PNGs into a contact sheet and look at it:
 
 Use `templates/html/`. It uses the same 15 layouts, the same geometry (pptx pt × 2 = px) and the same background JPEGs. The full guide is in `references/html-deck.md`.
 
-1. Copy `templates/html/example.html` to `templates/html/<talk-slug>.html`, keeping it next to the CSS and JS. Delete the layouts you don't need.
+1. **Scaffold** the deck in the user's working folder, never inside the skill folder:
+   `python3 ${CLAUDE_SKILL_DIR}/scripts/new-html-deck.py <deck-dir> --slug <talk-slug> --theme dark|light`.
+   That creates `<deck-dir>/<talk-slug>.html` (a copy of the example with all 15 layouts), plus `theme/` and `assets/`.
+   Delete the layouts you don't need.
 2. Set `<body class="deck" data-theme="dark|light">`. Use one `<section class="slide l-<layout>">` per slide:
    `l-title`, `l-title-photo`, `l-about`, `l-section`, `l-content`, `l-two-col`, `l-code`, `l-diagram`, `l-big-number`, `l-statement`, `l-thanks`, `l-welcome`, `l-agenda`, `l-up-next` and `l-break`.
 3. Fill in the same child classes as the example: `.kicker`, `.title`, `.bullets`, `.speaker`, `.role`, `.pill` (plus `.track`/`.level`), `.ec-photo` (with an `<img>`, or empty for the placeholder), `.big.grad-text` for numerals, and `.code pre` with `.k` keys.
 4. The HTML copy rules are the same as §4. HTML keeps letter-spacing and uppercase, so type mono text in normal case.
 5. Don't add inline positions, colours or backgrounds. If content doesn't fit, choose another layout.
-6. **Bundle:** `python3 scripts/build-html-deck.py templates/html/<slug>.html out/<slug>-envoycon10.html`. That gives one self-contained file of about 1.5 MB that works offline and as an Artifact. For PDF, open it in Chrome, press P, and set margins to None.
+6. **Bundle:** `python3 ${CLAUDE_SKILL_DIR}/scripts/build-html-deck.py <deck-dir>/<slug>.html <deck-dir>/<slug>-envoycon10.html`. That gives one self-contained file of about 1.5 MB that works offline and as an Artifact. For PDF, open it in Chrome, press P, and set margins to None.
 7. **Check:** use Playwright at a 1920×1080 viewport, screenshot `#1…#n`, and run the §7 checklist.
 
 ## 10. Tokens (quick reference)
