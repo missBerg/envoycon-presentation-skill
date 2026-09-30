@@ -17,13 +17,23 @@ envoycon-presentation/
   scripts/        build-html-deck.py (bundle to one file), background renderer, pptx builder
 ```
 
+## Install in Claude Code
+
+```bash
+claude plugin marketplace add missBerg/envoycon-presentation-skill
+claude plugin install envoycon-presentation@envoycon
+```
+
+Or run it inside a session: `/plugin marketplace add missBerg/envoycon-presentation-skill`, then `/plugin install envoycon-presentation@envoycon`, then `/reload-plugins`.
+Update later with `claude plugin marketplace update envoycon`.
+
 ## Quick start (HTML)
 
 ```bash
-cp envoycon-presentation/templates/html/example.html envoycon-presentation/templates/html/my-talk.html
-# edit the slides, keep the layout classes
-python3 envoycon-presentation/scripts/build-html-deck.py envoycon-presentation/templates/html/my-talk.html my-talk.html
-open my-talk.html   # → / ← to move between slides, P to print a PDF
+python3 envoycon-presentation/scripts/new-html-deck.py ~/talks/my-talk --slug my-talk
+# edit ~/talks/my-talk/my-talk.html, keep the layout classes
+python3 envoycon-presentation/scripts/build-html-deck.py ~/talks/my-talk/my-talk.html ~/talks/my-talk/my-talk-envoycon10.html
+open ~/talks/my-talk/my-talk-envoycon10.html   # → / ← to move between slides, P to print a PDF
 ```
 
 ## Rebuild the pptx
