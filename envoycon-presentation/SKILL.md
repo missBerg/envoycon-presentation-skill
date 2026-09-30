@@ -35,7 +35,7 @@ envoycon-presentation/
 
 **Getting the files:**
 1. Clone it with `git clone https://github.com/missBerg/envoycon-presentation-skill` if the shell has GitHub access.
-2. Otherwise, use the GitHub connector: `get_file_contents` on `envoycon-presentation/...` for text files, and download binaries by path.
+2. Otherwise, use the GitHub connector: `get_file_contents` with owner `missBerg`, repo `envoycon-presentation-skill` and a path under `envoycon-presentation/`. The repo is private, so the Claude GitHub app must have access to it. If you get a 404, ask the user to add the repo to the app.
 3. The local kit is a fallback: `~/Downloads/envoycon-design-system/slides/` has the pptx and `slides-kit/`.
 
 Never redraw a background, lockup or numeral. Always use these files.
@@ -160,7 +160,7 @@ for s in prs.slides:
         if sh.shape_type == 13: blobs.setdefault(sh.name, sh.image.blob)
 # blobs: 'Gradient numeral 01'…'10', 'Header lockup', 'Accent bar (horizontal|vertical)'.
 # The first sample set (dark) is harvested first; for a light deck take 'Header lockup' from a Light · slide
-# (or use slides-kit/assets/light/lockup.png).
+# (or use assets/brand/lockup-light.png).
 sldIdLst = prs.slides._sldIdLst
 for sldId in list(sldIdLst):
     prs.part.drop_rel(sldId.rId); sldIdLst.remove(sldId)
@@ -285,7 +285,7 @@ Every background is a scene of hexagonal out-of-focus lights. The hexagon is the
 Rules:
 - Never put text or gradient numerals over a light sharper than about 24px blur.
 - Don't add hexagon shapes on slides. To change a scene, edit its `keys` in
-  `slides-kit/backgrounds.html` and re-render with `node render-bg.mjs`, then
+  `scripts/backgrounds.html` and re-render with `node render-bg.mjs`, then
   export 1920×1080 JPEGs.
 
 Keep every layout on the master colour map. A layout with its own colour map
@@ -324,6 +324,9 @@ Tile the PNGs into a contact sheet and look at it:
    - If an upload silently does nothing, the tab is probably hidden
      (`document.visibilityState`); bring the Claude window to the current Space
      and retry with a fresh `find`.
+   - Uploads can take a minute to show up in Drive search, so check before
+     retrying. A retry that looked like it failed can leave a duplicate.
+     Search by title and remove any extras.
    - Drive converts the file to native Slides. Confirm it with Drive
      `search_files`, then rename it with `update_file`.
    - Never navigate away from an open Slides *editor* tab, because its unload
@@ -369,5 +372,5 @@ Gradient (both themes): `#d163ce → #b31aab → #8a12c4`.
 Fonts: Space Grotesk 700 (display), Inter 400/600 (body), and JetBrains Mono
 400/700 in uppercase (meta).
 
-Slide type scale in pt: talk title 44 · slide title 32 · section title 44 ·
+Slide type scale in pt: talk title 44 · slide title 32 · section title 60 ·
 statement 46 · body 18/16/14 · kicker 11 · chips 8.5 · footer 9.
